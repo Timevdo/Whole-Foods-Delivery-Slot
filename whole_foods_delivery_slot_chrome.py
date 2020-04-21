@@ -5,7 +5,21 @@ from selenium import webdriver
 import sys
 import time
 import os
+import winsound
 
+from twilio.rest import Client
+
+import config as cfg
+
+my_number = cfg.my_number
+
+#Text alert added by Timevdo
+def sms_alert(number):
+   client = Client(cfg.twilio_name, cfg.twilio_auth)
+   from_number = "+19892828024"
+
+   client.messages.create(to=number, from_=from_number, body="Your Amazon Delivery has a slot availible. Please go to your computer to complete the purchase")
+   print('\a')
 
 def getWFSlot(productUrl):
    headers = {
@@ -19,9 +33,16 @@ def getWFSlot(productUrl):
    time.sleep(60)
    no_open_slots = True
 
+   start_time = time.time()
+
+   iteration = 0
+
    while no_open_slots:
       driver.refresh()
-      print("refreshed")
+
+      print(iteration, "refreshed")
+      iteration += 1
+
       html = driver.page_source
       soup = bs4.BeautifulSoup(html, "html.parser")
       time.sleep(4)
@@ -32,7 +53,7 @@ def getWFSlot(productUrl):
          for each_date in all_dates:
             if slot_opened_text not in each_date.text:
                print('SLOTS OPEN 2!')
-               os.system('say "Slots for delivery opened!"')
+               sms_alert(my_number)
                no_open_slots = False
                time.sleep(1400)
       except AttributeError:
@@ -44,7 +65,7 @@ def getWFSlot(productUrl):
             print("NO SLOTS!")
       except AttributeError: 
             print('SLOTS OPEN 3!')
-            os.system('say "Slots for delivery opened!"')
+            sms_alert(my_number)
             no_open_slots = False
 
 
@@ -53,7 +74,7 @@ def getWFSlot(productUrl):
          next_slot_text = str([x.text for x in soup.findAll('h4', class_ ='ufss-slotgroup-heading-text a-text-normal')])
          if any(next_slot_text in slot_pattern for slot_pattern in slot_patterns):
             print('SLOTS OPEN!')
-            winsound.Beep(freq, duration)
+            print('\a')
             no_open_slots = False
 
             autoCheckout(driver)
@@ -61,7 +82,10 @@ def getWFSlot(productUrl):
       except AttributeError:
          pass
 
+   print(f"Slot found in {(time.time - start_time)/60} minutes")
 
+#sms_alert(my_number)
 getWFSlot('https://www.amazon.com/gp/buy/shipoptionselect/handlers/display.html?hasWorkingJavascript=1')
+
 
 

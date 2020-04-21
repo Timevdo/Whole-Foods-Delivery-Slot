@@ -6,12 +6,27 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
+from twilio.rest import Client
+
 import sys
 import time
 import os
 
 import winsound
 
+import config as cfg 
+
+my_number = cfg.my_number
+
+#Text alert added by Timevdo
+def sms_alert(number):
+   if cfg.send_text_alert:
+      client = Client(cfg.twilio_name, cfg.twilio_auth)
+      from_number = "+19892828024"
+
+      client.messages.create(to=number, from_=from_number, body="Your automatic slotfinder has found a delivery slot on Amazon! Please go to your computer now to continue, as slots may expire if left unattended")
+
+   print('\a')
 
 def autoCheckout(driver):
    driver = driver
@@ -58,10 +73,10 @@ def autoCheckout(driver):
          print("Order reviewed")
 
       print("Order Placed!")
-      winsound.Beep(freq, duration)
+      print('\a')
    except NoSuchElementException:
       print("Found a slot but it got taken, run script again.")
-      winsound.Beep(freq, duration)
+      print('\a')
       time.sleep(1400)
 
 def getWFSlot(productUrl):
@@ -91,7 +106,7 @@ def getWFSlot(productUrl):
          next_slot_text = str([x.text for x in soup.findAll('h4', class_ ='ufss-slotgroup-heading-text a-text-normal')])
          if any(next_slot_text in slot_pattern for slot_pattern in slot_patterns):
             print('SLOTS OPEN!')
-            winsound.Beep(freq, duration)
+            sms_alert(my_number)
             no_open_slots = False
 
             autoCheckout(driver)
@@ -105,7 +120,7 @@ def getWFSlot(productUrl):
          for each_date in all_dates:
             if slot_opened_text not in each_date.text:
                print('SLOTS OPEN!')
-               winsound.Beep(freq, duration)
+               sms_alert(my_number)
                no_open_slots = False
                autoCheckout(driver)
 
@@ -118,12 +133,10 @@ def getWFSlot(productUrl):
             print("NO SLOTS!")
       except AttributeError: 
             print('SLOTS OPEN!')
-            winsound.Beep(freq, duration)
+            sms_alert(my_number)
             no_open_slots = False
 
             autoCheckout(driver)
-
-
 
 getWFSlot('https://www.amazon.com/gp/buy/shipoptionselect/handlers/display.html?hasWorkingJavascript=1')
 
