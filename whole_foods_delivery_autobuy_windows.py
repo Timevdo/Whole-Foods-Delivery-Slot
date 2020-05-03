@@ -13,10 +13,12 @@ import time
 import os
 
 import winsound
+import logging
 
 import config as cfg 
 
 my_number = cfg.my_number
+logging.basicConfig(filename='autbuy_log.log', filemode='w', format='%(name)s - %(asctime)s - %(levelname)s - %(message)s')
 
 #Text alert added by Timevdo
 def sms_alert(number):
@@ -35,6 +37,9 @@ def autoCheckout(driver):
    
    time.sleep(4)
    driver.execute_script("window.scrollTo(0, 200)")
+
+   logging.debug('autocheckout start')
+
    try:
       slot_select_button = driver.find_element_by_xpath('/html/body/div[5]/div[1]/div/div[2]/div/div/div/div/div[1]/div[4]/div[2]/div/div[3]/div/div/ul/li/span/span/div/div[2]/span/span/button')
       slot_select_button.click()
@@ -76,7 +81,7 @@ def autoCheckout(driver):
       print('\a')
    except NoSuchElementException:
       print("Found a slot but it got taken, run script again.")
-      print('\a')
+      print('\a') 
       time.sleep(1400)
 
 def getWFSlot(productUrl):
@@ -94,6 +99,7 @@ def getWFSlot(productUrl):
    time.sleep(60)
    no_open_slots = True
 
+   logging.info('autorefreshing start')
    while no_open_slots:
       driver.refresh()
       print("refreshed")
@@ -110,6 +116,7 @@ def getWFSlot(productUrl):
             no_open_slots = False
 
             autoCheckout(driver)
+            logging.info('slot found')
             
       except AttributeError:
          pass
@@ -122,6 +129,8 @@ def getWFSlot(productUrl):
                print('SLOTS OPEN!')
                sms_alert(my_number)
                no_open_slots = False
+               logging.info('slot found')
+
                autoCheckout(driver)
 
       except AttributeError:
@@ -135,9 +144,11 @@ def getWFSlot(productUrl):
             print('SLOTS OPEN!')
             sms_alert(my_number)
             no_open_slots = False
+            logging.info('slot found')
 
             autoCheckout(driver)
 
+logging.info('start of program')
 getWFSlot('https://www.amazon.com/gp/buy/shipoptionselect/handlers/display.html?hasWorkingJavascript=1')
 
 
